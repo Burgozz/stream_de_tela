@@ -108,7 +108,7 @@ registerSignaling(io);
 setInterval(sweep, 5 * 60 * 1000).unref();
 
 server.listen(PORT, () => {
-  console.log(`MeshMeet rodando em ${scheme}://localhost:${PORT}`);
+  console.log(`Stream de tela guri rodando em ${scheme}://localhost:${PORT}`);
   if (scheme === 'http') {
     console.log(
       'Aviso: em HTTP, camera/microfone/tela so funcionam via localhost.\n' +
