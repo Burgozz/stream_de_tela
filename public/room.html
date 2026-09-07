@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sala — MeshMeet</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖥️</text></svg>"
+    />
+  </head>
+  <body class="pagina-sala">
+    <!-- Lobby: nome + previa da camera antes de entrar -->
+    <div id="lobby" class="lobby">
+      <div class="cartao lobby-cartao">
+        <h1 class="lobby-titulo">Entrar na sala</h1>
+        <p class="lobby-codigo-linha">
+          Codigo: <code id="lobby-codigo" class="codigo"></code>
+        </p>
+
+        <div class="lobby-video">
+          <video id="lobby-preview" autoplay playsinline muted></video>
+        </div>
+
+        <p id="lobby-aviso" class="aviso aviso-erro" hidden></p>
+
+        <form id="lobby-form" autocomplete="off">
+          <label class="campo">
+            <span class="campo-rotulo">Seu nome</span>
+            <input
+              id="lobby-nome"
+              class="campo-input"
+              type="text"
+              maxlength="32"
+              placeholder="Como o pessoal te chama"
+              required
+            />
+          </label>
+          <button id="lobby-entrar" type="submit" class="botao botao-primario botao-grande">
+            Entrar na chamada
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Chamada -->
+    <div class="sala">
+      <header class="topo">
+        <div class="topo-info">
+          <span class="topo-marca">MeshMeet</span>
+          <code id="sala-codigo" class="codigo"></code>
+          <span id="contador" class="contador">1 pessoa</span>
+        </div>
+        <button id="btn-copiar" type="button" class="botao botao-fantasma">
+          Copiar link
+        </button>
+      </header>
+
+      <p id="conexao-banner" class="banner" hidden></p>
+
+      <main class="palco-area">
+        <section id="stage" class="stage" data-mode="grid">
+          <div id="screen-tabs" class="screen-tabs" hidden></div>
+          <div id="screen-area" class="screen-area"></div>
+          <div id="grid" class="grid" data-count="1"></div>
+        </section>
+
+        <aside id="filmstrip" class="filmstrip" hidden></aside>
+
+        <!-- Chat -->
+        <section id="chat-panel" class="chat-panel" hidden aria-label="Chat da sala">
+          <header class="chat-topo">
+            <h2>Chat</h2>
+            <button id="chat-fechar" type="button" class="botao-icone" aria-label="Fechar chat">
+              ×
+            </button>
+          </header>
+          <div id="chat-lista" class="chat-lista"></div>
+          <form id="chat-form" class="chat-form" autocomplete="off">
+            <input
+              id="chat-input"
+              class="chat-input"
+              type="text"
+              maxlength="500"
+              placeholder="Escreva uma mensagem"
+            />
+            <button type="submit" class="botao botao-primario">Enviar</button>
+          </form>
+        </section>
+      </main>
+
+      <footer class="controles">
+        <button id="btn-mic" type="button" class="controle" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="controle-icone">
+            <path
+              d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"
+              fill="currentColor"
+            />
+            <path
+              d="M5 11a7 7 0 0 0 14 0M12 18v3"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <line class="risco" x1="4" y1="4" x2="20" y2="20" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span class="btn-texto">Microfone</span>
+        </button>
+
+        <button id="btn-cam" type="button" class="controle" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="controle-icone">
+            <rect x="2" y="6" width="13" height="12" rx="2.5" fill="currentColor" />
+            <path d="m16 11 5-3v8l-5-3v-2Z" fill="currentColor" />
+            <line class="risco" x1="4" y1="4" x2="20" y2="20" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span class="btn-texto">Camera</span>
+        </button>
+
+        <button id="btn-tela" type="button" class="controle controle-destaque">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="controle-icone">
+            <rect
+              x="2.5"
+              y="4"
+              width="19"
+              height="13"
+              rx="2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <path
+              d="M12 8v5m0-5-2.2 2.2M12 8l2.2 2.2M8 20h8"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="btn-texto">Compartilhar</span>
+        </button>
+
+        <button id="btn-chat" type="button" class="controle">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="controle-icone">
+            <path
+              d="M4 5h16v11H9l-5 4V5Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="btn-texto">Chat</span>
+          <span id="chat-badge" class="chat-badge" hidden></span>
+        </button>
+
+        <button id="btn-sair" type="button" class="controle controle-sair">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="controle-icone">
+            <path
+              d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l-4 4 4 4M6 12h10"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="btn-texto">Sair</span>
+        </button>
+      </footer>
+    </div>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <!-- Tela de saida -->
+    <div id="saida" class="saida" hidden>
+      <div class="cartao">
+        <h1>Voce saiu da chamada</h1>
+        <p>Ate a proxima.</p>
+        <div class="saida-botoes">
+          <button id="btn-reentrar" type="button" class="botao botao-primario">
+            Entrar de novo
+          </button>
+          <button id="btn-voltar" type="button" class="botao botao-secundario">
+            Ir para a inicial
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/js/room.js"></script>
+  </body>
+</html>

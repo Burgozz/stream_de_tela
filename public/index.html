@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>MeshMeet — chamadas com compartilhamento de tela</title>
+    <meta
+      name="description"
+      content="Chamadas em grupo com compartilhamento de tela, direto no navegador. Sem instalar nada, sem cadastro."
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖥️</text></svg>"
+    />
+  </head>
+  <body class="pagina-home">
+    <main class="home">
+      <header class="home-header">
+        <h1 class="home-titulo">MeshMeet</h1>
+        <p class="home-sub">
+          Chamada em grupo com compartilhamento de tela, direto no navegador.
+          Sem instalar nada, sem cadastro.
+        </p>
+      </header>
+
+      <div class="cartao">
+        <button id="btn-criar" type="button" class="botao botao-primario botao-grande">
+          Criar uma sala
+        </button>
+
+        <div class="divisor"><span>ou entre em uma sala</span></div>
+
+        <form id="form-entrar" class="form-entrar" autocomplete="off">
+          <label class="campo">
+            <span class="campo-rotulo">Codigo ou link da sala</span>
+            <input
+              id="input-codigo"
+              class="campo-input"
+              type="text"
+              inputmode="text"
+              placeholder="bravo-tigre-42"
+              spellcheck="false"
+              autocapitalize="none"
+            />
+          </label>
+          <button type="submit" class="botao botao-secundario">Entrar</button>
+        </form>
+
+        <p id="erro" class="aviso aviso-erro" hidden></p>
+      </div>
+
+      <section class="home-dicas">
+        <h2>Como funciona</h2>
+        <ol>
+          <li>Crie uma sala e receba um codigo como <code>bravo-tigre-42</code>.</li>
+          <li>Mande o link (ou so o codigo) para o pessoal no grupo.</li>
+          <li>Cada um digita um nome e entra. Ate 6 pessoas por sala.</li>
+        </ol>
+        <p class="home-nota">
+          O audio e o video vao direto de um navegador para o outro. O servidor
+          so apresenta os participantes entre si — nada de midia passa por ele.
+        </p>
+      </section>
+    </main>
+
+    <script type="module" src="/js/home.js"></script>
+  </body>
+</html>

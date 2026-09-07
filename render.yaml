@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: meshmeet
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      # Descomente e preencha se contratar um TURN (veja o README).
+      # - key: TURN_URL
+      #   sync: false
+      # - key: TURN_USERNAME
+      #   sync: false
+      # - key: TURN_CREDENTIAL
+      #   sync: false
