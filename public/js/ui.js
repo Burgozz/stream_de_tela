@@ -97,7 +97,7 @@ export function setTileStream(id, stream) {
 
 /**
  * @param {string} id
- * @param {{muted?: boolean, camOn?: boolean, speaking?: boolean, connection?: string}} estado
+ * @param {{muted?: boolean, camOn?: boolean, speaking?: boolean, connection?: string, aviso?: string}} estado
  */
 export function setTileState(id, estado) {
   const registro = tiles.get(id);
@@ -116,6 +116,13 @@ export function setTileState(id, estado) {
     if (status) {
       status.textContent = ruim ? 'reconectando...' : conectando ? 'conectando...' : '';
     }
+  }
+
+  // Aviso livre, usado na propria miniatura para "sem permissao de ...".
+  // So a miniatura remota mostra estado de conexao, entao os dois nao brigam.
+  if (typeof estado.aviso === 'string') {
+    const status = el.querySelector('.tile-status');
+    if (status) status.textContent = estado.aviso;
   }
 }
 

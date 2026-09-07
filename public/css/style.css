@@ -602,19 +602,28 @@ code.codigo {
   height: 22px;
 }
 
-/* O risco diagonal so aparece quando o recurso esta desligado. */
+/* O risco diagonal aparece com o recurso desligado ou sem permissao. */
 .controle-icone .risco {
   stroke: currentColor;
   opacity: 0;
 }
-.controle.is-off .controle-icone .risco {
+.controle.is-off .controle-icone .risco,
+.controle.is-bloqueado .controle-icone .risco {
   opacity: 1;
 }
 
+/* Vermelho: desligado de proposito. */
 .controle.is-off {
   background: rgb(229 72 77 / 15%);
   border-color: rgb(229 72 77 / 40%);
   color: #ff9c9e;
+}
+
+/* Ambar: o navegador nao deu acesso. Nao e escolha da pessoa, e um pendente. */
+.controle.is-bloqueado {
+  background: rgb(245 165 36 / 15%);
+  border-color: rgb(245 165 36 / 45%);
+  color: #ffd699;
 }
 
 .controle.is-on {

@@ -7,6 +7,7 @@ import {
   describeMediaError,
   getCameraTrack,
   getLocalStream,
+  getMicrophoneTrack,
   getScreenStream,
   unlockAudio,
   watchSpeaking,
@@ -62,6 +63,14 @@ let camLigada = true;
 let compartilhando = false;
 let saiuDeProposito = false;
 
+/**
+ * "Bloqueado" e diferente de "desligado": a pessoa nao negou nada de proposito,
+ * o navegador e que nao deu acesso. A UI precisa separar os dois, senao parece
+ * que ela se mutou sozinha — e o botao vira o caminho de pedir a permissao.
+ */
+let audioBloqueado = false;
+let videoBloqueado = false;
+
 /** Participantes conhecidos (inclui voce). @type {Map<string, any>} */
 const participantes = new Map();
 /** Funcoes para parar de observar "quem esta falando". */
@@ -95,6 +104,8 @@ async function prepararPreview() {
   previewStream = stream;
   micLigado = hasAudio;
   camLigada = hasVideo;
+  audioBloqueado = !hasAudio;
+  videoBloqueado = !hasVideo;
 
   if (stream) {
     lobbyPreview.srcObject = stream;
@@ -102,13 +113,17 @@ async function prepararPreview() {
   }
   if (warning) {
     lobbyAviso.hidden = false;
-    lobbyAviso.textContent = warning;
+    // Recusar a permissao nao impede a entrada, e isso precisa ficar dito.
+    lobbyAviso.textContent = stream
+      ? warning
+      : `${warning} Voce pode entrar assim mesmo: vai ver e ouvir todo mundo, e ` +
+        'da para liberar depois pelos botoes de microfone e camera.';
   }
   // Sem camera e sem microfone ainda da para entrar: vale como espectador.
   lobbyEntrar.disabled = false;
 }
 
-prepararPreview();
+const preparacao = prepararPreview();
 
 lobbyForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -117,6 +132,9 @@ lobbyForm.addEventListener('submit', async (ev) => {
     lobbyNome.focus();
     return;
   }
+  // Se a pessoa foi mais rapida que o popup de permissao, espera a resposta
+  // dela antes de entrar — senao entraria sem midia por pura corrida.
+  await preparacao;
   meuNome = nome.slice(0, 32);
   localStorage.setItem(NOME_SALVO, meuNome);
   lobbyEntrar.disabled = true;
@@ -280,11 +298,21 @@ function aoEntrar(resposta) {
   const video = localStream.getVideoTracks()[0] ?? null;
   micLigado = Boolean(audio?.enabled);
   camLigada = Boolean(video);
+  audioBloqueado = !audio;
+  videoBloqueado = !video;
   peerManager.localAudio = audio;
   peerManager.localVideo = video;
 
   ui.setTileState(selfId, { muted: !micLigado, camOn: camLigada });
+  atualizarAvisoProprio();
   atualizarBotoes();
+
+  if (audioBloqueado && videoBloqueado) {
+    ui.toast(
+      'Voce entrou sem microfone e sem camera. Da para acompanhar assim, ou clicar nos botoes para liberar.',
+      { duracao: 10000 },
+    );
+  }
   if (localStream.getAudioTracks().length > 0) observarVoz(selfId, localStream);
 
   // Eu cheguei depois: eu ofereco a conexao de camera para quem ja estava.
@@ -343,18 +371,39 @@ function observarVoz(id, stream) {
  * Controles
  * ------------------------------------------------------------------ */
 
-btnMic.addEventListener('click', () => {
-  const track = localStream?.getAudioTracks()[0];
-  if (!track) {
-    ui.toast('Nenhum microfone disponivel nesta sessao.', { tipo: 'erro' });
+btnMic.addEventListener('click', async () => {
+  // Sem permissao, o botao nao alterna nada: ele pede o acesso de novo.
+  if (audioBloqueado) {
+    await liberarMicrofone();
     return;
   }
+  const track = localStream?.getAudioTracks()[0];
+  if (!track) return;
   micLigado = !micLigado;
   track.enabled = micLigado;
   socket.emit('state', { muted: !micLigado });
   ui.setTileState(selfId, { muted: !micLigado, speaking: false });
   atualizarBotoes();
 });
+
+async function liberarMicrofone() {
+  try {
+    const track = await getMicrophoneTrack();
+    if (!track) throw new Error('sem faixa de audio');
+    localStream.addTrack(track);
+    await peerManager.setLocalAudioTrack(track);
+    audioBloqueado = false;
+    micLigado = true;
+    observarVoz(selfId, localStream);
+    socket.emit('state', { muted: false });
+    ui.setTileState(selfId, { muted: false });
+    ui.toast('Microfone liberado.', { tipo: 'ok', duracao: 3000 });
+  } catch (err) {
+    ui.toast(describeMediaError(err, 'microfone'), { tipo: 'erro', duracao: 9000 });
+  }
+  atualizarAvisoProprio();
+  atualizarBotoes();
+}
 
 btnCam.addEventListener('click', async () => {
   if (camLigada) {
@@ -373,16 +422,31 @@ btnCam.addEventListener('click', async () => {
       localStream.addTrack(track);
       await peerManager.setLocalVideoTrack(track);
       camLigada = true;
+      videoBloqueado = false;
     } catch (err) {
-      ui.toast(describeMediaError(err, 'camera'), { tipo: 'erro', duracao: 8000 });
+      videoBloqueado = true;
+      ui.toast(describeMediaError(err, 'camera'), { tipo: 'erro', duracao: 9000 });
+      atualizarAvisoProprio();
+      atualizarBotoes();
       return;
     }
   }
   ui.setTileStream(selfId, localStream);
   ui.setTileState(selfId, { camOn: camLigada });
   socket.emit('state', { camOn: camLigada });
+  atualizarAvisoProprio();
   atualizarBotoes();
 });
+
+/** Mostra na propria miniatura o que esta sem permissao. */
+function atualizarAvisoProprio() {
+  const faltando = [];
+  if (audioBloqueado) faltando.push('microfone');
+  if (videoBloqueado) faltando.push('camera');
+  ui.setTileState(selfId, {
+    aviso: faltando.length > 0 ? `sem permissao de ${faltando.join(' e ')}` : '',
+  });
+}
 
 btnTela.addEventListener('click', async () => {
   if (compartilhando) {
@@ -450,17 +514,27 @@ function rotulo(curto, longo) {
 }
 
 function atualizarBotoes() {
-  btnMic.classList.toggle('is-off', !micLigado);
-  btnMic.setAttribute('aria-pressed', String(!micLigado));
-  btnMic.querySelector('.btn-texto').textContent = micLigado
-    ? rotulo('Mic', 'Microfone')
-    : 'Mudo';
+  const PEDIR_DE_NOVO = 'Sem permissao do navegador. Clique para pedir de novo.';
 
-  btnCam.classList.toggle('is-off', !camLigada);
+  btnMic.classList.toggle('is-bloqueado', audioBloqueado);
+  btnMic.classList.toggle('is-off', !micLigado && !audioBloqueado);
+  btnMic.setAttribute('aria-pressed', String(!micLigado));
+  btnMic.title = audioBloqueado ? PEDIR_DE_NOVO : '';
+  btnMic.querySelector('.btn-texto').textContent = audioBloqueado
+    ? rotulo('Sem perm.', 'Sem permissao')
+    : micLigado
+      ? rotulo('Mic', 'Microfone')
+      : 'Mudo';
+
+  btnCam.classList.toggle('is-bloqueado', videoBloqueado);
+  btnCam.classList.toggle('is-off', !camLigada && !videoBloqueado);
   btnCam.setAttribute('aria-pressed', String(!camLigada));
-  btnCam.querySelector('.btn-texto').textContent = camLigada
-    ? rotulo('Camera', 'Camera')
-    : rotulo('Cam off', 'Camera off');
+  btnCam.title = videoBloqueado ? PEDIR_DE_NOVO : '';
+  btnCam.querySelector('.btn-texto').textContent = videoBloqueado
+    ? rotulo('Sem perm.', 'Sem permissao')
+    : camLigada
+      ? rotulo('Camera', 'Camera')
+      : rotulo('Cam off', 'Camera off');
 
   atualizarBotaoTela();
 }

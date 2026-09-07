@@ -105,6 +105,12 @@ export async function getCameraTrack() {
   return stream.getVideoTracks()[0] ?? null;
 }
 
+/** Liga o microfone sozinho (usado quando a pessoa entrou sem audio). */
+export async function getMicrophoneTrack() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
+  return stream.getAudioTracks()[0] ?? null;
+}
+
 /**
  * Captura da tela. `contentHint = 'detail'` diz ao encoder para priorizar
  * nitidez de texto em vez de fluidez, que e o certo para compartilhar tela.
