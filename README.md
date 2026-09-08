@@ -287,10 +287,20 @@ estão. Para mexer no visual, edite o CSS e recarregue.
 Clique no cadeado da barra de endereços, libere câmera e microfone e recarregue.
 Dá para entrar mesmo sem liberar: você vê e ouve os outros, só não é visto.
 
-**O botão de compartilhar tela está desabilitado**
-O navegador não tem `getDisplayMedia`. Isso é normal em celulares — iPhone e a
-maioria dos Android não deixam compartilhar tela pelo navegador. Você continua
-vendo a tela de quem compartilha do computador.
+**O botão de compartilhar tela aparece apagado**
+Este navegador não consegue capturar tela. Toque nele que ele explica o motivo.
+
+No **iPhone e no iPad** isso é definitivo: o iOS não permite compartilhamento de
+tela por uma página web, e a limitação vale para todos os navegadores de lá —
+Safari, Chrome, Firefox, todos usam o mesmo motor da Apple por imposição dela.
+Não há solução em código; só um app nativo contornaria, o que está fora do
+escopo. Quem está no iPhone participa normalmente com áudio e câmera, e vê a
+tela de quem compartilhar.
+
+No **Android** depende do navegador, e vale testar no aparelho de verdade em vez
+de confiar no que a documentação promete. Se o navegador anunciar suporte mas
+falhar na hora de capturar, o botão se marca como indisponível sozinho e explica
+— a chamada não quebra.
 
 **Entrei, mas não vejo nem ouço uma pessoa específica (as outras estão ok)**
 Quase sempre é a rede dela bloqueando a conexão direta. Veja

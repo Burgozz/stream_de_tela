@@ -551,6 +551,11 @@ code.codigo {
   background: rgb(0 0 0 / 60%);
   border-radius: 6px;
   padding: 2px 7px;
+  /* Numa miniatura de 132px o texto quebrava em duas linhas e cobria o nome. */
+  max-width: calc(100% - 12px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .tile-status:empty {
   display: none;
@@ -630,6 +635,18 @@ code.codigo {
   background: var(--azul);
   border-color: var(--azul);
   color: #fff;
+}
+
+/*
+ * Recurso que este navegador nao oferece. Continua clicavel de proposito: o
+ * toque e o unico jeito de explicar o motivo no celular, onde nao existe hover.
+ */
+.controle.is-indisponivel {
+  opacity: 0.5;
+  border-style: dashed;
+}
+.controle.is-indisponivel:hover {
+  background: var(--fundo-3);
 }
 
 .controle-sair {

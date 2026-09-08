@@ -98,11 +98,19 @@ Dois invariantes que sustentam isso:
 - **Estado "sem permissão" ≠ "desligado de propósito".** Botão âmbar escrito
   "Sem permissão" (clicável para pedir de novo) vs. botão vermelho de quem se
   mutou. Preserve essa distinção ao mexer nos controles.
+- **Recurso indisponível nunca vira `disabled`.** Botão desabilitado não recebe
+  toque e `title` só aparece no hover — no celular isso vira um botão morto sem
+  explicação. Use a classe `is-indisponivel`: continua clicável e o toque
+  responde com o motivo num toast. Vale para qualquer recurso futuro.
 
 ## Deploy
 
-`git push` para `main` → o Render reconstrói e republica sozinho, em 1–2
-minutos. Não é preciso tocar no painel.
+**O deploy automático não está funcionando.** O `render.yaml` está configurado
+para publicar a cada push em `main`, mas na prática nenhum push disparou build —
+só o primeiro deploy, feito na criação do Blueprint. Provavelmente falta a
+permissão de webhook do Render no GitHub. Enquanto não for corrigido, publicar
+exige: página do serviço no Render → **Manual Deploy** → **Deploy latest
+commit**. Depois de dar `push`, avise que ainda falta esse passo.
 
 - URL: <https://meshmeet-6kge.onrender.com>
 - **Não renomeie o serviço no Render nem o `name` do `render.yaml`** — isso muda

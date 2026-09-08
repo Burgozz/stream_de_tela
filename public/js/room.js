@@ -2,13 +2,16 @@
  * Orquestracao da sala: lobby, controles, socket e ligacao com o PeerManager.
  */
 import {
-  canShareScreen,
+  MOTIVO_FALHOU,
   checkSupport,
   describeMediaError,
   getCameraTrack,
   getLocalStream,
   getMicrophoneTrack,
   getScreenStream,
+  isScreenCancel,
+  isScreenUnsupported,
+  screenShareSupport,
   unlockAudio,
   watchSpeaking,
 } from './media.js';
@@ -91,11 +94,25 @@ if (problemas.length > 0) {
   lobbyEntrar.disabled = true;
 }
 
-if (!canShareScreen()) {
-  btnTela.disabled = true;
-  btnTela.title =
-    'Este navegador nao permite compartilhar tela (comum em celulares). Voce continua vendo a tela dos outros.';
+/** Motivo pelo qual nao da para compartilhar tela aqui, ou null se der. */
+let telaIndisponivel = null;
+
+/**
+ * O botao NAO usa `disabled`: um botao desabilitado nao recebe toque, e `title`
+ * so aparece no hover — ou seja, no celular a pessoa veria um botao cinza morto
+ * sem explicacao nenhuma, que e justamente onde a limitacao acontece. Ele fica
+ * clicavel e responde com o motivo.
+ */
+function marcarTelaIndisponivel(motivo) {
+  telaIndisponivel = motivo;
+  btnTela.classList.add('is-indisponivel');
+  btnTela.classList.remove('is-on');
+  btnTela.setAttribute('aria-disabled', 'true');
+  btnTela.title = motivo;
 }
+
+const suporteTela = screenShareSupport();
+if (!suporteTela.ok) marcarTelaIndisponivel(suporteTela.motivo);
 
 /** Previa da camera antes de entrar, para a pessoa se ver e ja dar a permissao. */
 async function prepararPreview() {
@@ -438,17 +455,33 @@ btnCam.addEventListener('click', async () => {
   atualizarBotoes();
 });
 
-/** Mostra na propria miniatura o que esta sem permissao. */
+/**
+ * Mostra na propria miniatura o que esta sem permissao. O texto e curto de
+ * proposito: numa miniatura de celular so cabe uma linha, e o detalhe de qual
+ * dispositivo faltou ja esta nos proprios botoes.
+ */
 function atualizarAvisoProprio() {
   const faltando = [];
   if (audioBloqueado) faltando.push('microfone');
   if (videoBloqueado) faltando.push('camera');
-  ui.setTileState(selfId, {
-    aviso: faltando.length > 0 ? `sem permissao de ${faltando.join(' e ')}` : '',
-  });
+
+  const aviso =
+    faltando.length === 0
+      ? ''
+      : faltando.length === 2
+        ? 'sem permissao'
+        : `sem permissao de ${faltando[0]}`;
+
+  ui.setTileState(selfId, { aviso });
 }
 
 btnTela.addEventListener('click', async () => {
+  // Toque no botao indisponivel serve para explicar o porque.
+  if (telaIndisponivel) {
+    ui.toast(telaIndisponivel, { duracao: 10000 });
+    return;
+  }
+
   if (compartilhando) {
     peerManager.stopScreen();
     compartilhando = false;
@@ -462,9 +495,14 @@ btnTela.addEventListener('click', async () => {
   try {
     stream = await getScreenStream();
   } catch (err) {
-    // Cancelar o seletor de tela do navegador cai aqui e nao e um erro.
-    if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError') {
-      ui.toast(describeMediaError(err, 'tela'), { tipo: 'erro', duracao: 8000 });
+    if (isScreenUnsupported(err)) {
+      // O navegador anunciava suporte mas nao entregou. Vale para a sessao
+      // inteira: nao adianta oferecer o botao de novo.
+      marcarTelaIndisponivel(MOTIVO_FALHOU);
+      ui.toast(MOTIVO_FALHOU, { tipo: 'erro', duracao: 10000 });
+    } else if (!isScreenCancel(err)) {
+      // Fechar o seletor de tela cai no isScreenCancel e nao vira aviso.
+      ui.toast(describeMediaError(err, 'tela'), { tipo: 'erro', duracao: 9000 });
     }
     return;
   }
